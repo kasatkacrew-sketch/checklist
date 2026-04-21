@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Вызов принят · Билайн</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Golos+Text:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: #0a0a0a;
+  color: #f0f0eb;
+  font-family: 'Golos Text', system-ui, sans-serif;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* HEADER */
+.hdr {
+  background: #FFD700;
+  color: #0a0a0a;
+  padding: 16px 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+.hdr-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.hdr-title { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1.25; }
+.hdr-sub { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+.hdr-count { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; text-align: right; }
+.hdr-clabel { font-size: 9px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em; text-align: right; }
+.pbar { margin-top: 5px; height: 3px; width: 100px; background: rgba(0,0,0,0.2); border-radius: 2px; overflow: hidden; margin-left: auto; }
+.pbar-inner { height: 100%; background: #0a0a0a; border-radius: 2px; transition: width 0.3s; }
+
+/* DAY TABS */
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 0 0; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Golos Text', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s, color 0.15s;
+  background: rgba(0,0,0,0.18);
+  color: #0a0a0a;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+.tab.active { background: #0a0a0a; color: #FFD700; }
+.tab-prog { opacity: 0.65; font-weight: 400; }
+/* bottom border trick so sticky header doesn't cut shadow */
+.hdr-border { height: 1px; background: rgba(0,0,0,0.12); }
+
+/* CONTENT */
+.container { max-width: 680px; margin: 0 auto; padding: 14px 12px; }
+
+.day-meta { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #222; }
+.day-meta-title { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+.day-meta-sub { font-size: 11px; color: #555; margin-top: 3px; }
+
+/* SECTION */
+.sec { margin-bottom: 8px; border-radius: 10px; overflow: hidden; background: #181818; border: 1px solid #252525; }
+
+.sec-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+.sec-time { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 9px; color: #FFD700; letter-spacing: 0.06em; min-width: 72px; flex-shrink: 0; }
+.sec-name { font-weight: 600; font-size: 13px; color: #f0f0eb; flex: 1; line-height: 1.3; }
+.sec-cnt { font-size: 11px; color: #555; white-space: nowrap; }
+.sec-cnt.done-all { color: #4caf50; }
+.chevron { font-size: 9px; color: #444; transition: transform 0.2s; flex-shrink: 0; }
+.sec.open .chevron { transform: rotate(180deg); }
+
+.sec-items { display: none; border-top: 1px solid #222; padding: 4px 0 8px; }
+.sec.open .sec-items { display: block; }
+
+/* ITEM */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 10px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: 6px;
+  margin: 1px 6px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.item:active { background: #222; }
+
+.cb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #333;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  pointer-events: none;
+}
+.item.done .cb { background: #4caf50; border-color: #4caf50; }
+.cb-tick { display: none; color: #fff; font-size: 13px; font-weight: 900; line-height: 1; }
+.item.done .cb-tick { display: block; }
+
+.item-body { flex: 1; }
+.item-text { font-size: 13px; line-height: 1.5; color: #f0f0eb; transition: color 0.15s; }
+.item.done .item-text { text-decoration: line-through; color: #444; }
+.item-note { font-size: 11px; color: #555; margin-top: 2px; }
+
+/* ISSUES */
+.issue {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: 10px;
+  margin-bottom: 7px;
+  background: #181818;
+  border: 1px solid #252525;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.issue:active { background: #222; }
+.issue-cb { width: 22px; height: 22px; border: 2px solid #FFD70055; border-radius: 6px; flex-shrink: 0; margin-top: 1px; background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.15s; pointer-events: none; }
+.issue.done .issue-cb { background: #4caf50; border-color: #4caf50; }
+.issue-text { font-size: 13px; line-height: 1.5; color: #f0f0eb; transition: color 0.15s; }
+.issue.done .issue-text { text-decoration: line-through; color: #444; }
+.issue-who { font-size: 11px; color: #555; margin-top: 3px; }
+
+.issues-hdr { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #FFD700; margin-bottom: 14px; }
+.issues-sub { font-size: 11px; color: #555; margin-top: 3px; font-family: 'Golos Text', sans-serif; font-weight: 400; letter-spacing: 0; }
+
+/* RESET */
+.reset-btn {
+  margin-top: 32px;
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid #252525;
+  color: #444;
+  font-family: 'Golos Text', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+}
+.reset-btn:active { border-color: #ff4444; color: #ff4444; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">Вызов принят · Билайн</div>
+      <div class="hdr-sub">Чек-лист · 27–30 число</div>
+    </div>
+    <div>
+      <div class="hdr-count" id="totalCount">0/0</div>
+      <div class="hdr-clabel">выполнено</div>
+      <div class="pbar"><div class="pbar-inner" id="totalBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hdr-border"></div>
+</div>
+
+<div class="container" id="content"></div>
+
+<script>
+var DAYS = [
+  { id:"27", label:"27 число", title:"День приезда организаторов", sections:[
+    { id:"s27a", time:"До вылета", name:"Подготовка к отъезду", items:[
+      {id:"i1", t:"Купить билеты на самолёт (уточнить рейс с подрядчиком по тимбилдингу)"},
+      {id:"i2", t:"Распечатать грамоты (плотный А4, после получения списка от клиента)"},
+      {id:"i3", t:"Напечатать таблички на лобовое стекло (лого Билайн, цветные)"},
+      {id:"i4", t:"Уточнить в типографии — делают ли табличку на деревянной ножке"},
+      {id:"i5", t:"Проверить статус бирок на рюкзаки (подрядчик — ждём образец)", n:"Новый макет: чёрный фон, жёлтый логотип"},
+      {id:"i6", t:"Прикрепить бирки к рюкзакам (если успеют доставить)"},
+      {id:"i7", t:"Собрать все материалы: бейджи, бирки, грамоты, таблички"},
+    ]},
+    { id:"s27b", time:"По прилёту", name:"Владикавказ — сбор мерча", items:[
+      {id:"i8", t:"Забрать награды в Деловых линиях (по паспорту)"},
+      {id:"i9", t:"Убедиться, что машина отеля забрала рюкзаки и дождевики с WB ПВЗ"},
+      {id:"i10", t:"Подтвердить, что алкоголь доставлен в отель напрямую"},
+      {id:"i11", t:"Выехать в отель Космос (≈2 часа)"},
+    ]},
+    { id:"s27c", time:"Вечер", name:"Долина Солнца — осмотр площадки", items:[
+      {id:"i12", t:"Заказать транспорт из отеля в Долину Солнца (уточнить у менеджера Ирины)"},
+      {id:"i13", t:"Встретиться с подрядчиком по тимбилдингу на площадке"},
+      {id:"i14", t:"Осмотреть место для шведского стола"},
+      {id:"i15", t:"Осмотреть площадку для тимбилдинга (доулы + хор)"},
+      {id:"i16", t:"Обсудить навигацию: таблички А4 с лого Билайн по территории"},
+      {id:"i17", t:"Зафиксировать всё на видео/фото для клиента"},
+    ]},
+  ]},
+  { id:"28", label:"28 число", title:"День приезда участников", sections:[
+    { id:"s28a", time:"До 08:00", name:"Подготовка зоны регистрации", items:[
+      {id:"i18", t:"Разложить бейджи на стойке регистрации"},
+      {id:"i19", t:"Прикрепить бирки к рюкзакам и выставить мерч"},
+      {id:"i20", t:"Вставить грамоты в рамки", n:"Отодвинуть плёнку, аккуратно вложить листы А4"},
+      {id:"i21", t:"Проверить контент и презентации на пульте"},
+    ]},
+    { id:"s28b", time:"12:00", name:"Монтаж сцены и техники", items:[
+      {id:"i22", t:"Встретить подрядчиков по монтажу"},
+      {id:"i23", t:"Проконтролировать монтаж сцены"},
+      {id:"i24", t:"Проконтролировать монтаж LED-экрана"},
+      {id:"i25", t:"Проконтролировать установку звука"},
+      {id:"i26", t:"Проверить работу всей техники после монтажа"},
+    ]},
+    { id:"s28c", time:"11:20+", name:"Приём участников", items:[
+      {id:"i27", t:"Встречать участников на регистрации, выдавать бейджи и рюкзаки"},
+      {id:"i28", t:"Отметить 6 опаздывающих участников в списке"},
+      {id:"i29", t:"Проконтролировать передачу ланч-боксов для 6 опоздавших в номера"},
+    ]},
+    { id:"s28d", time:"18:00–18:30", name:"Вечерняя программа (58 человек)", items:[
+      {id:"i30", t:"Подтвердить точное время начала с клиентом (18:00 или 18:30)"},
+      {id:"i31", t:"Проверить, что еда накрыта в полном объёме"},
+      {id:"i32", t:"Проверить достаточность алкоголя"},
+      {id:"i33", t:"Контролировать тайминг программы (подрядчик ведёт)"},
+      {id:"i34", t:"Мини-дискотека — проверить музыку и звук"},
+    ]},
+  ]},
+  { id:"29", label:"29 число", title:"Основной день", sections:[
+    { id:"s29a", time:"До 09:00", name:"Подготовка к конференции", items:[
+      {id:"i35", t:"Подготовить стойку регистрации"},
+      {id:"i36", t:"Разложить бейджи по списку"},
+      {id:"i37", t:"Проверить контент, презентации на пульте"},
+      {id:"i38", t:"Проверить работу LED-экрана и звука"},
+      {id:"i39", t:"Расставить грамоты в рамках в зоне награждения"},
+      {id:"i40", t:"Провести репетицию с двумя хостес — вынос наград"},
+      {id:"i41", t:"Предупредить официантов: в момент награждения еду не выносить, не шуметь"},
+      {id:"i42", t:"Договориться с Зелимханом: организатор едет в первом джипе на обратном пути"},
+    ]},
+    { id:"s29b", time:"09:00–09:30", name:"Регистрация участников", items:[
+      {id:"i43", t:"Встречать гостей, отмечать по списку"},
+      {id:"i44", t:"Убедиться, что все участники зарегистрированы"},
+    ]},
+    { id:"s29c", time:"09:30–11:30", name:"Конференция", items:[
+      {id:"i45", t:"Один организатор на пульте, контроль контента"},
+      {id:"i46", t:"Контролировать тайминг конференции"},
+      {id:"i47", t:"Второй организатор выезжает в Долину Солнца заранее"},
+    ]},
+    { id:"s29d", time:"11:30–12:00", name:"Сбор на тимбилдинг", items:[
+      {id:"i48", t:"Организовать посадку в 17 джипов (16 × 4 участника)"},
+      {id:"i49", t:"Убедиться, что все участники сели по спискам"},
+      {id:"i50", t:"Раздать таблички на лобовые стёкла джипов"},
+    ]},
+    { id:"s29e", time:"12:00–13:00", name:"Горное озеро", items:[
+      {id:"i51", t:"Контролировать прогулку, помогать фотографу и видеографу"},
+      {id:"i52", t:"Собрать всех участников обратно в джипы"},
+    ]},
+    { id:"s29f", time:"13:40–15:40", name:"Долина Солнца — обед + тимбилдинг", items:[
+      {id:"i53", t:"Встретить участников у ресторана"},
+      {id:"i54", t:"Направить гостей к шведскому столу"},
+      {id:"i55", t:"Проконтролировать наличие и качество еды"},
+      {id:"i56", t:"Тимбилдинг: проконтролировать расстановку 44 доулов"},
+      {id:"i57", t:"Следить за таймингом тимбилдинга (подрядчик ведёт)"},
+      {id:"i58", t:"После финала — собрать участников в джипы"},
+    ]},
+    { id:"s29g", time:"15:40–17:40", name:"Архынский перевал + возвращение", items:[
+      {id:"i59", t:"Уточнить у Зелимхана — едем на перевал или план Б", n:"При снеге: альтернативная локация по решению подрядчика"},
+      {id:"i60", t:"Организатор едет в первом джипе → приезжает в отель первым"},
+      {id:"i61", t:"Собрать всех участников из джипов по возвращении"},
+    ]},
+    { id:"s29h", time:"17:40–19:00", name:"Пересетап зала + свободное время", items:[
+      {id:"i62", t:"Проконтролировать пересетап: экран, сцена, брендинг"},
+      {id:"i63", t:"Установить и проверить фотозону"},
+      {id:"i64", t:"Финальная проверка звука и экрана перед гала-ужином"},
+      {id:"i65", t:"Ещё раз проговорить с хостес порядок выноса наград"},
+      {id:"i66", t:"Напомнить официантам: в момент награждения еду не выносить"},
+    ]},
+    { id:"s29i", time:"19:00–00:00", name:"Гала-ужин", items:[
+      {id:"i67", t:"Проконтролировать блок награждения (хостес, вынос, порядок)"},
+      {id:"i68", t:"Следить за таймингом (ведущий рулит программой)"},
+      {id:"i69", t:"Контролировать еду и алкоголь — чтобы всего хватало"},
+      {id:"i70", t:"Убедиться, что дискотека и музыка запущены в нужное время"},
+    ]},
+  ]},
+  { id:"30", label:"30 число", title:"День отъезда", sections:[
+    { id:"s30a", time:"Утро", name:"Отъезд участников", items:[
+      {id:"i71", t:"Собрать участников в лобби по спискам"},
+      {id:"i72", t:"Один организатор — в лобби, второй — считает по спискам в автобусе"},
+      {id:"i73", t:"Убедиться, что все участники сели в трансфер"},
+      {id:"i74", t:"Проверить, что никто ничего не забыл в отеле"},
+    ]},
+  ]},
+];
+
+var ISSUES = [
+  {id:"o1", t:"Купить билеты — уточнить рейс с подрядчиком по тимбилдингу", w:"Решается после звонка с подрядчиком"},
+  {id:"o2", t:"Получить список победителей от клиента → отдать грамоты в типографию", w:"Ждём от клиента"},
+  {id:"o3", t:"Бирки на рюкзаки — дождаться образца, подтвердить доставку", w:"Подрядчик по мерчу"},
+  {id:"o4", t:"Запросить видео площадки Долины Солнца (шведский стол + зона тимбилдинга)", w:"Тоня → подрядчик Долина Солнца"},
+  {id:"o5", t:"Уточнить транспорт из отеля в Долину Солнца", w:"Спросить у менеджера Ирины"},
+  {id:"o6", t:"Уточнить в типографии — делают ли таблички на деревянной ножке", w:"Вика → типография"},
+  {id:"o7", t:"Подтвердить доставку алкоголя в отель через Деловые линии", w:"Подрядчик по алкоголю"},
+  {id:"o8", t:"Согласовать с Зелимханом: организатор едет впереди на обратном пути", w:"Проговорить до отъезда 29-го"},
+];
+
+var checked = {};
+var openSecs = {};
+var activeDay = "27";
+
+// init open sections
+DAYS.forEach(function(d){ d.sections.forEach(function(s){ openSecs[s.id]=true; }); });
+
+function allItems(){
+  var arr=[];
+  DAYS.forEach(function(d){ d.sections.forEach(function(s){ s.items.forEach(function(i){ arr.push(i); }); }); });
+  return arr;
+}
+
+function dayItems(day){
+  var arr=[];
+  day.sections.forEach(function(s){ s.items.forEach(function(i){ arr.push(i); }); });
+  return arr;
+}
+
+function save(){
+  try{ localStorage.setItem('bl_cl', JSON.stringify(checked)); }catch(e){}
+}
+function load(){
+  try{
+    var raw=localStorage.getItem('bl_cl');
+    if(raw) checked=JSON.parse(raw);
+  }catch(e){}
+}
+
+function updateHeader(){
+  var all=allItems(), done=all.filter(function(i){return checked[i.id];});
+  document.getElementById('totalCount').textContent=done.length+'/'+all.length;
+  var pct=all.length?Math.round(done.length/all.length*100):0;
+  document.getElementById('totalBar').style.width=pct+'%';
+}
+
+function renderTabs(){
+  var tabs=document.getElementById('tabs');
+  tabs.innerHTML='';
+  DAYS.forEach(function(d){
+    var items=dayItems(d), done=items.filter(function(i){return checked[i.id];});
+    var btn=document.createElement('button');
+    btn.className='tab'+(d.id===activeDay?' active':'');
+    btn.innerHTML=d.label+' <span class="tab-prog">'+done.length+'/'+items.length+'</span>';
+    btn.addEventListener('touchend', (function(id){ return function(e){ e.preventDefault(); setDay(id); }; })(d.id));
+    btn.addEventListener('click', (function(id){ return function(){ setDay(id); }; })(d.id));
+    tabs.appendChild(btn);
+  });
+  var iss=document.createElement('button');
+  iss.className='tab'+('issues'===activeDay?' active':'');
+  var issDone=ISSUES.filter(function(i){return checked[i.id];});
+  iss.innerHTML='⚡ Вопросы <span class="tab-prog">'+issDone.length+'/'+ISSUES.length+'</span>';
+  iss.addEventListener('touchend', function(e){ e.preventDefault(); setDay('issues'); });
+  iss.addEventListener('click', function(){ setDay('issues'); });
+  tabs.appendChild(iss);
+}
+
+function setDay(id){
+  activeDay=id;
+  renderTabs();
+  renderContent();
+}
+
+function renderContent(){
+  var el=document.getElementById('content');
+  el.innerHTML='';
+
+  if(activeDay==='issues'){
+    var issDone=ISSUES.filter(function(i){return checked[i.id];});
+    var hdr=document.createElement('div');
+    hdr.className='issues-hdr';
+    hdr.innerHTML='⚡ Открытые вопросы<div class="issues-sub">'+issDone.length+' из '+ISSUES.length+' закрыто</div>';
+    el.appendChild(hdr);
+    ISSUES.forEach(function(issue){
+      var div=document.createElement('div');
+      div.className='issue'+(checked[issue.id]?' done':'');
+      div.innerHTML='<div class="issue-cb"><span class="cb-tick">✓</span></div><div><div class="issue-text">'+issue.t+'</div><div class="issue-who">'+issue.w+'</div></div>';
+      div.addEventListener('touchend', (function(id,d){ return function(e){ e.preventDefault(); toggleCheck(id,d); }; })(issue.id, div));
+      div.addEventListener('click', (function(id,d){ return function(){ toggleCheck(id,d); }; })(issue.id, div));
+      el.appendChild(div);
+    });
+  } else {
+    var day=DAYS.find(function(d){return d.id===activeDay;});
+    if(!day) return;
+    var items=dayItems(day), done=items.filter(function(i){return checked[i.id];});
+    var meta=document.createElement('div');
+    meta.className='day-meta';
+    meta.innerHTML='<div class="day-meta-title">'+day.title+'</div><div class="day-meta-sub">'+done.length+' из '+items.length+' выполнено</div>';
+    el.appendChild(meta);
+
+    day.sections.forEach(function(sec){
+      var secDone=sec.items.filter(function(i){return checked[i.id];});
+      var allDone=secDone.length===sec.items.length;
+      var isOpen=openSecs[sec.id];
+
+      var secEl=document.createElement('div');
+      secEl.className='sec'+(isOpen?' open':'');
+
+      var hdrBtn=document.createElement('button');
+      hdrBtn.className='sec-hdr';
+      hdrBtn.innerHTML='<span class="sec-time">'+sec.time+'</span><span class="sec-name">'+sec.name+'</span><span class="sec-cnt'+(allDone?' done-all':'')+'">'+secDone.length+'/'+sec.items.length+'</span><span class="chevron">▼</span>';
+      hdrBtn.addEventListener('touchend', (function(sid, se){ return function(e){ e.preventDefault(); openSecs[sid]=!openSecs[sid]; se.classList.toggle('open'); }; })(sec.id, secEl));
+      hdrBtn.addEventListener('click', (function(sid, se){ return function(){ openSecs[sid]=!openSecs[sid]; se.classList.toggle('open'); }; })(sec.id, secEl));
+      secEl.appendChild(hdrBtn);
+
+      var itemsDiv=document.createElement('div');
+      itemsDiv.className='sec-items';
+
+      sec.items.forEach(function(item){
+        var itemEl=document.createElement('div');
+        itemEl.className='item'+(checked[item.id]?' done':'');
+        var note=item.n?'<div class="item-note">'+item.n+'</div>':'';
+        itemEl.innerHTML='<div class="cb"><span class="cb-tick">✓</span></div><div class="item-body"><div class="item-text">'+item.t+'</div>'+note+'</div>';
+        itemEl.addEventListener('touchend', (function(id,el){ return function(e){ e.preventDefault(); toggleCheck(id,el); }; })(item.id, itemEl));
+        itemEl.addEventListener('click', (function(id,el){ return function(){ toggleCheck(id,el); }; })(item.id, itemEl));
+        itemsDiv.appendChild(itemEl);
+      });
+
+      secEl.appendChild(itemsDiv);
+      el.appendChild(secEl);
+    });
+  }
+
+  var resetBtn=document.createElement('button');
+  resetBtn.className='reset-btn';
+  resetBtn.textContent='Сбросить все отметки';
+  resetBtn.addEventListener('touchend', function(e){ e.preventDefault(); resetAll(); });
+  resetBtn.addEventListener('click', resetAll);
+  el.appendChild(resetBtn);
+}
+
+function toggleCheck(id, elRef){
+  checked[id]=!checked[id];
+  if(elRef) elRef.classList.toggle('done', !!checked[id]);
+  save();
+  updateHeader();
+  renderTabs();
+  // update section count in current view without full re-render
+  var secCnts=document.querySelectorAll('.sec-cnt');
+  secCnts.forEach(function(cnt){
+    var sec=cnt.closest('.sec');
+    if(!sec) return;
+    var items=sec.querySelectorAll('.item');
+    var done=sec.querySelectorAll('.item.done');
+    cnt.textContent=done.length+'/'+items.length;
+    cnt.className='sec-cnt'+(done.length===items.length?' done-all':'');
+  });
+  // update day meta
+  var meta=document.querySelector('.day-meta-sub');
+  if(meta && activeDay!=='issues'){
+    var day=DAYS.find(function(d){return d.id===activeDay;});
+    if(day){
+      var items=dayItems(day), done=items.filter(function(i){return checked[i.id];});
+      meta.textContent=done.length+' из '+items.length+' выполнено';
+    }
+  }
+  // update issues sub
+  var issHdr=document.querySelector('.issues-hdr .issues-sub');
+  if(issHdr){
+    var issDone=ISSUES.filter(function(i){return checked[i.id];});
+    issHdr.textContent=issDone.length+' из '+ISSUES.length+' закрыто';
+  }
+}
+
+function resetAll(){
+  if(!confirm('Сбросить все отметки?')) return;
+  checked={};
+  save();
+  updateHeader();
+  renderTabs();
+  renderContent();
+}
+
+load();
+renderTabs();
+renderContent();
+updateHeader();
+</script>
+</body>
+</html>
